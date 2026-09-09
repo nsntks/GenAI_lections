@@ -66,11 +66,11 @@ jobs:
         # Скачиваем модель, указанную в коде теста
         ollama pull qwen3.5:0.8b
     - name: Test TodoListTool
+      working-directory: ./3_1_LLM_agent
+      env:
+        PYTHONPATH: .
       run: |
-        # Добавляем путь к модулям
-        export PYTHONPATH="${PYTHONPATH}:."
-        # Запускаем тесты для TodoList
-        python -m pytest tests/test_todolist.py -v --cov=llm_agent.tool_todolist --cov-report=term
+        python -m pytest tests/test_todolist.py -v
     
     - name: Test with pytest
       working-directory: ./3_1_LLM_agent
