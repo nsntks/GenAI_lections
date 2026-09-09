@@ -81,15 +81,4 @@ jobs:
         python -m pytest -v
         python main.py
       
-    - name: Generate coverage report
-      run: |
-        export PYTHONPATH="${PYTHONPATH}:."
-        python -m pytest tests/test_todolist.py --cov=llm_agent.tool_todolist --cov-report=xml --cov-report=term
     
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
