@@ -1,4 +1,5 @@
 # llm_agent/core.py
+# llm_agent/core_v2.py
 
 import requests
 import json
@@ -8,6 +9,7 @@ from decouple import config
 from .tool_calculator import CalculatorTool
 from .tool_websearch import WebSearchTool
 from .tool_pdfinfo import PDFInfoTool
+from .tool_todolist import TodoListTool 
 
 class LLMAgent:
     """
@@ -44,6 +46,7 @@ class LLMAgent:
             "calculator": CalculatorTool(),
             "web_search": WebSearchTool(),
             "pdf_info": PDFInfoTool(),
+            "todo_list": TodoListTool(),
         }
         self.conversation_history = []
     
@@ -82,13 +85,25 @@ class LLMAgent:
         Создает план действий, используя LLM.
         Работает как с OpenRouter, так и с Ollama.
         """
+
+        
         # Системный промпт, который объясняет агенту его роль и формат ответа
         system_prompt = f"""
         You are a helpful AI planning assistant. Analyze the user's request and decide if you need to use any tools.
+
         Available tools:
         - **calculator**: For any math-related questions (numbers, calculations). Use it with the full expression.
         - **web_search**: For finding any information about the real world (current events, facts, definitions). Use it with the user's question or a clear search query. USE ONLY RUSSIAN LANGUAGE QUERIES in this tool.
         - **pdf_info**: For extracting information from PDF files (metadata, page count, text content). Use it with a local file path or a URL to a PDF file.
+        - **todo_list**: For managing a todo list. Commands: add "task text", list, done <id>, delete <id>, clear.
+
+        Examples for todo_list:
+        - To add a task: {{"action": "todo_list", "input": "add Купить молоко"}}
+        - To list tasks: {{"action": "todo_list", "input": "list"}}
+        - To mark as done: {{"action": "todo_list", "input": "done 3"}}
+        - To delete: {{"action": "todo_list", "input": "delete 3"}}
+        - To clear all: {{"action": "todo_list", "input": "clear"}}
+
         Your response MUST be ONLY a JSON object of the following format.
         If one or more tools are needed to answer, return JSON of this structure:
         {{
