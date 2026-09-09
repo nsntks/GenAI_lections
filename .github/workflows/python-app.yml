@@ -70,7 +70,7 @@ jobs:
         # Добавляем путь к модулям
         export PYTHONPATH="${PYTHONPATH}:."
         # Запускаем тесты для TodoList
-        python -m pytest tests/test_todolist.py -v --cov=llm_agent.tool_todolist --cov-report=term
+        python -m pytest 3_1_LLM_agent/tests/test_todolist.py -v --cov=llm_agent.tool_todolist --cov-report=term
     
     - name: Test with pytest
       working-directory: ./3_1_LLM_agent
