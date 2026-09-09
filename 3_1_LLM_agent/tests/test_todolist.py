@@ -1,4 +1,4 @@
-# test_todolist.py
+# tests/test_todolist.py
 
 import unittest
 import json
@@ -8,8 +8,10 @@ from llm_agent.tool_todolist import TodoListTool
 
 
 class TestTodoListTool(unittest.TestCase):
+    """Тесты для класса TodoListTool"""
 
     def setUp(self):
+        """Создаём временный файл для хранения перед каждым тестом"""
         self.temp_file = tempfile.NamedTemporaryFile(
             suffix='.json', 
             delete=False,
@@ -20,11 +22,12 @@ class TestTodoListTool(unittest.TestCase):
         self.tool = TodoListTool(storage_path=self.storage_path)
 
     def tearDown(self):
+        """Удаляем временный файл после каждого теста"""
         if os.path.exists(self.storage_path):
             os.unlink(self.storage_path)
 
     def test_add_task(self):
-        """ Добавление задачи"""
+        """Тест 1: Добавление задачи"""
         result = self.tool.use("add", "Купить молоко")
         self.assertIn("Задача #1 добавлена", result)
         self.assertIn("Купить молоко", result)
@@ -36,7 +39,7 @@ class TestTodoListTool(unittest.TestCase):
         self.assertFalse(todos[0]['done'])
 
     def test_list_tasks(self):
-        """Просмотр списка задач"""
+        """Тест 2: Просмотр списка задач"""
         # Добавляем несколько задач
         self.tool.use("add", "Задача 1")
         self.tool.use("add", "Задача 2")
@@ -48,7 +51,7 @@ class TestTodoListTool(unittest.TestCase):
         self.assertIn("Невыполненные задачи", result)
 
     def test_mark_done(self):
-        """Отметка задачи как выполненной"""
+        """Тест 3: Отметка задачи как выполненной"""
         self.tool.use("add", "Сделать дз")
         
         # Проверяем, что задача не выполнена
@@ -57,23 +60,24 @@ class TestTodoListTool(unittest.TestCase):
         
         # Отмечаем как выполненную
         result = self.tool.use("done", "1")
-        self.assertIn("Задача 1 отмечена выполненой", result)
+        self.assertIn("Задача #1 отмечена как выполненная", result)
         
         # Проверяем, что задача выполнена
         todos = self.tool._load_todos()
         self.assertTrue(todos[0]['done'])
 
     def test_delete_task(self):
-        """Удаление задачи"""
+        """Тест 4: Удаление задачи"""
         self.tool.use("add", "Удалить меня")
         self.assertEqual(len(self.tool._load_todos()), 1)
         
         result = self.tool.use("delete", "1")
-        self.assertIn("Задача 1 удалена", result)
+        self.assertIn("Задача #1 удалена", result)
         self.assertEqual(len(self.tool._load_todos()), 0)
 
 
 def run_tests():
+    """Запуск всех тестов"""
     loader = unittest.TestLoader()
     suite = loader.loadTestsFromTestCase(TestTodoListTool)
     runner = unittest.TextTestRunner(verbosity=2)
