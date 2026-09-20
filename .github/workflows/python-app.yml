@@ -74,3 +74,10 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         python -m pytest -v
         python main.py
+
+    - name: Test DirectoryWatcherTool
+      working-directory: ./3_1_LLM_agent
+      env:
+        PYTHONPATH: .
+      run: |
+        python -m pytest tests/test_directory_watcher.py -v
