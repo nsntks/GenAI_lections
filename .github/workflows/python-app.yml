@@ -10,7 +10,7 @@ on:
     branches: [ "main" ]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -87,3 +87,82 @@ jobs:
         PYTHONPATH: .
       run: |
         python -m pytest tests/test_directory_watcher.py -v
+
+name: Python application
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: write    # ← ВАЖНО: даём права на запись (для коммита бейджа)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest pytest-cov coverage-badge
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        if [ -f 3_1_LLM_agent/requirements.txt ]; then pip install -r 3_1_LLM_agent/requirements.txt; fi
+    
+    - name: Download and extract Ollama manually
+      run: |
+        if [ "${{ runner.arch }}" = "X64" ]; then ARCH="amd64"; else ARCH="arm64"; fi
+        curl -fsSL "https://ollama.com/download/ollama-linux-${ARCH}.tar.zst" -o ollama.tar.zst
+        mkdir -p .ollama-install
+        tar -C .ollama-install --zstd -xf ollama.tar.zst
+        rm ollama.tar.zst
+        echo "$(pwd)/.ollama-install/bin" >> $GITHUB_PATH
+
+    - name: Start Ollama Service and Pull Model
+      run: |
+        export OLLAMA_NUM_PARALLEL=1
+        export OLLAMA_MAX_LOADED_MODELS=1
+        ollama serve > ollama.log 2>&1 &
+        sleep 5
+        ollama pull qwen3.5:0.8b
+    
+    # ============================================
+    # НАШИ ТЕСТЫ С ПОКРЫТИЕМ
+    # ============================================
+    - name: Test with coverage
+      working-directory: ./3_1_LLM_agent
+      env:
+        PYTHONPATH: .
+      run: |
+        python -m pytest tests/test_todolist.py tests/test_directory_watcher.py -v \
+          --cov=llm_agent.tool_todolist \
+          --cov=llm_agent.tool_directory_watcher \
+          --cov-report=term \
+          --cov-report=xml
+
+
+    
+    # ============================================
+    # ГЕНЕРАЦИЯ БЕЙДЖА
+    # ============================================
+    - name: Generate coverage badge
+      working-directory: ./3_1_LLM_agent
+      run: |
+        coverage-badge -o coverage.svg -f
+    
+    - name: Commit coverage badge
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add 3_1_LLM_agent/coverage.svg
+        git diff --quiet && git diff --staged --quiet || git commit -m "ci: update coverage badge [skip ci]"
+        git push || true

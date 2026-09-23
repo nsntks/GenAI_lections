@@ -6,3 +6,4 @@ pytest
 pypdf
 pdfplumber
 watchdog
+pytest-cov
